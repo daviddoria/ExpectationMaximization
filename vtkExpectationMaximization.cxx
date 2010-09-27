@@ -28,17 +28,26 @@ int vtkExpectationMaximization::RequestData(
 {
   this->Responsibilities->Resize(this->Data.size(),this->GetNumberOfModels());
 
-
-
   bool done = false;
   int iter = 0;
 
-  std::vector<Model> lastModels(this->Models.size());
+  // We need to actually copy the data
+  std::vector<Model*> lastModels(this->Models.size());
+  for(unsigned int i = 0; i < this->Models.size(); i++)
+    {
+    Model* model = new Gaussian1D; // This can be any derived type, we just need access to the member data
+    lastModels[i] = model;
+    }
 
   do
     {
     // Save a snapshot of the current models
-    std::copy(this->Models.begin(), this->Models.end(), lastModels.begin());
+    //std::copy(this->Models.begin(), this->Models.end(), lastModels.begin());
+    for(unsigned int i = 0; i < this->Models.size(); i++)
+      {
+      lastModels[i]->SetVariance(this->Models[i]->GetVariance());
+      lastModels[i]->SetMean(this->Models[i]->GetMean());
+      }
 
     // E step - evaluate responsibilities
     for(unsigned int point = 0; point < this->NumberOfDataPoints(); point++)
@@ -46,11 +55,11 @@ int vtkExpectationMaximization::RequestData(
         double normalization = 0.0;
         for(int model = 0; model < this->GetNumberOfModels(); model++)
           {
-          normalization += this->Models[model].WeightedEvaluate(this->Data[point]);
+          normalization += this->Models[model]->WeightedEvaluate(this->Data[point]);
           }
        for(int model = 0; model < this->GetNumberOfModels(); model++)
           {
-          double resp = this->Models[model].WeightedEvaluate(this->Data[point]);
+          double resp = this->Models[model]->WeightedEvaluate(this->Data[point]);
           this->Responsibilities->SetValue(point, model, resp / normalization);
           }
       }
@@ -64,21 +73,21 @@ int vtkExpectationMaximization::RequestData(
         sumResponsibilities += this->Responsibilities->GetValue(i, model);
         }
 
-      double newMean = 0;
+      vnl_vector<double> newMean(1, 0);
       for(int i = 0; i < this->NumberOfDataPoints(); i++)
         {
-        newMean += this->Responsibilities->GetValue(i, model) * this->Data[i];
+        newMean(0) += this->Responsibilities->GetValue(i, model) * this->Data[i](0);
         }
-      newMean /= sumResponsibilities;
-      this->Models[model].SetMean(newMean);
+      newMean(0) /= sumResponsibilities;
+      this->Models[model]->SetMean(newMean);
 
-      double newVariance = 0;
+      vnl_matrix<double> newVariance(1,1,0);
       for(int i = 0; i < this->NumberOfDataPoints(); i++)
         {
-        newVariance += this->Responsibilities->GetValue(i,model) * pow(this->Data[i] - newMean, 2);
+        newVariance(0,0) += this->Responsibilities->GetValue(i,model) * pow(this->Data[i](0) - newMean(0), 2);
         }
-      newVariance /= sumResponsibilities;
-      this->Models[model].SetVariance(newVariance);
+      newVariance(0,0) /= sumResponsibilities;
+      this->Models[model]->SetVariance(newVariance);
       }
 
     // Update mixing coefficients
@@ -89,7 +98,7 @@ int vtkExpectationMaximization::RequestData(
         {
         sumResponsibilities += this->Responsibilities->GetValue(i, model);
         }
-      this->Models[model].SetMixingCoefficient(sumResponsibilities/static_cast<double>(this->NumberOfDataPoints()));
+      this->Models[model]->SetMixingCoefficient(sumResponsibilities/static_cast<double>(this->NumberOfDataPoints()));
       }
 
     //std::cout << "Models at iteration " << iter << std::endl;
@@ -100,8 +109,11 @@ int vtkExpectationMaximization::RequestData(
     done = true; // assume we have converged until we see otherwise
     for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
       {
-      if((fabs(this->Models[model].GetMean() - lastModels[model].GetMean()) > this->MinChange) ||
-        (fabs(this->Models[model].GetVariance() - lastModels[model].GetVariance()) > this->MinChange) )
+      double meanDiff = fabs(this->Models[model]->GetMean()(0) - lastModels[model]->GetMean()(0));
+      //std::cout << "meanDiff: " << meanDiff << std::endl;
+      double varianceDiff = fabs(this->Models[model]->GetVariance()(0,0) - lastModels[model]->GetVariance()(0,0));
+      //std::cout << "varianceDiff: " << varianceDiff << std::endl;
+      if((meanDiff > this->MinChange) || (varianceDiff > this->MinChange) )
         {
         done = false;
         }
@@ -109,6 +121,8 @@ int vtkExpectationMaximization::RequestData(
   iter++;
   }while(!done && (iter < this->MaxIterations) );
 
+  std::cout << "Performed " << iter << " iterations." << std::endl;
+  
   return 1;
 }
 

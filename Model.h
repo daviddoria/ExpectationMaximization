@@ -2,42 +2,52 @@
 #define MODEL_H
 
 #include <vtkMath.h>
+#include <vtkSmartPointer.h>
+#include <vtkDenseArray.h>
 
 #include <cmath>
 #include <vector>
 
+#include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
+#include <vnl/algo/vnl_determinant.h>
+#include <vnl/vnl_inverse.h>
+
 class Model
 {
   public:
-    double GetMean(){return this->Mean;}
-    void SetMean(double m){this->Mean = m;}
+    
+    void Init();
+    
+    void SetDiagonalCovariance(std::vector<double> diagonal);
+    
+    void SetDimensionality(int dim);
+    int GetDimensionality();
+    
+    vnl_vector<double> GetMean();
+    void SetMean(vnl_vector<double> m);
 
-    double GetVariance(){return this->Variance;}
-    void SetVariance(double v){this->Variance = v;}
+    vnl_matrix<double> GetVariance();
+    void SetVariance(vnl_matrix<double> v);
 
-    double GetStandardDeviation(){return sqrt(this->Variance);}
-    void SetStandardDeviation(double s){this->Variance = pow(s,2);}
+    double GetMixingCoefficient();
+    void SetMixingCoefficient(double m);
 
-    double GetMixingCoefficient(){return this->MixingCoefficient;}
-    void SetMixingCoefficient(double m){this->MixingCoefficient = m;}
+    virtual double Evaluate(vnl_vector<double> x) = 0;
 
-    double Evaluate(double x)
-    {
-      return (1./sqrt(2*vtkMath::Pi()*this->Variance)) * exp(-(pow(x-this->Mean,2))/(2.*this->Variance));
-    }
+    virtual double WeightedEvaluate(vnl_vector<double> x) = 0;
+    
+  protected:
 
-    double WeightedEvaluate(double x)
-    {
-      return (this->MixingCoefficient/sqrt(2*vtkMath::Pi()*this->Variance)) * exp(-(pow(x-this->Mean,2))/(2.*this->Variance));
-    }
-  private:
-    double Mean;
-    double Variance;
+    vnl_vector<double> Mean;
+
+    vnl_matrix<double> Variance;
+    
+    int Dimensionality;
+    
     double MixingCoefficient;
+   
+   
 };
-
-void PlotModels(std::vector<Model> models, double range[2]);
-void PlotModels(std::vector<Model> models, std::vector<double> points);
-void OutputModelInfo(std::vector<Model> models);
 
 #endif
