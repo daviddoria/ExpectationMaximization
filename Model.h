@@ -21,8 +21,8 @@ class Model
     
     void SetDiagonalCovariance(std::vector<double> diagonal);
     
-    void SetDimensionality(int dim);
-    int GetDimensionality();
+    void SetDimensionality(unsigned int dim);
+    unsigned int GetDimensionality();
     
     vnl_vector<double> GetMean();
     void SetMean(vnl_vector<double> m);
@@ -43,7 +43,7 @@ class Model
 
     vnl_matrix<double> Variance;
     
-    int Dimensionality;
+    unsigned int Dimensionality;
     
     double MixingCoefficient;
    

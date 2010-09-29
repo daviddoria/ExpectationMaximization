@@ -11,16 +11,6 @@ Gaussian1D::Gaussian1D()
   this->Dimensionality = 1;
 }
 
-void OutputModelInfo(std::vector<Model> models)
-{
-  for(unsigned int i = 0; i < models.size(); i++)
-    {
-    std::cout << "Model " << i << " : Mean = " << models[i].GetMean()
-              << " Variance = " << models[i].GetVariance()
-              << " Mixing coefficient = " << models[i].GetMixingCoefficient() << std::endl;
-    }
-}
-
 double Gaussian1D::Evaluate(double x)
 {
   /*

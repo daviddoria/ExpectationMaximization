@@ -8,8 +8,9 @@ INCLUDE(${VTK_USE_FILE})
 FIND_PACKAGE(VXL REQUIRED)
 INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
 
-ADD_EXECUTABLE(ExpectationMaximization Example.cxx vtkExpectationMaximization.cxx Gaussian1D.cxx GaussianND.cxx Model.cxx Plotting.cxx)
-TARGET_LINK_LIBRARIES(ExpectationMaximization vtkInfovis vtkViews vtkCharts
-vnl rrel #vgl vcl
-)
+include_directories(/media/portable/src/github/KMeansClustering)
+
+ADD_EXECUTABLE(ExpectationMaximization Example.cxx vtkExpectationMaximization.cxx Gaussian1D.cxx GaussianND.cxx Model.cxx Plotting.cxx
+/media/portable/src/github/KMeansClustering/vtkKMeansClustering.cxx)
+TARGET_LINK_LIBRARIES(ExpectationMaximization vtkInfovis vtkViews vtkCharts vnl rrel)
 

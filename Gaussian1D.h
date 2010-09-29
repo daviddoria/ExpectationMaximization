@@ -43,8 +43,4 @@ class Gaussian1D : public GaussianND
 
 };
 
-void PlotModels(std::vector<Gaussian1D> models, double range[2]);
-void PlotModels(std::vector<Gaussian1D> models, std::vector<double> points);
-void OutputModelInfo(std::vector<Gaussian1D> models);
-
 #endif

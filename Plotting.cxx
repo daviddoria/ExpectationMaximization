@@ -38,21 +38,21 @@ void PlotModels1D(std::vector<Model*> models, double range[2])
     table->AddColumn(modelArray);
     }
 
-  int numPoints = 100;
+  unsigned int numPoints = 100;
 
   float step = (range[1] - range[0]) / (numPoints-1);
   table->SetNumberOfRows(numPoints);
 
   // Setup axis
-  for (int i = 0; i < numPoints; ++i)
+  for(unsigned int i = 0; i < numPoints; ++i)
     {
     double xval = range[0] + i * step;
     table->SetValue(i, 0, xval);
     }
 
-  for(int model = 0; model < models.size(); model++)
+  for(unsigned int model = 0; model < models.size(); model++)
     {
-    for (int i = 0; i < numPoints; ++i)
+    for(unsigned int i = 0; i < numPoints; ++i)
       {
       vnl_vector<double> v(1);
       v(0) = range[0] + i * step;
@@ -93,14 +93,14 @@ void PlotModels1D(std::vector<Model*> models, double range[2])
 
 void CreateSurface(Model* model, double xrange[2], double yrange[2], int divisions, vtkPolyData* surface)
 {
-  std::cout << "Creating surface on (" << xrange[0] << " , " << xrange[1] << ") , (" << yrange[0] << " , " << yrange[1] << " )" << std::endl;
+  //std::cout << "Creating surface on (" << xrange[0] << " , " << xrange[1] << ") , (" << yrange[0] << " , " << yrange[1] << " )" << std::endl;
   vtkSmartPointer<vtkPoints> points =
     vtkSmartPointer<vtkPoints>::New();
  
   double xstep = (xrange[1] - xrange[0]) / static_cast<double>(divisions);
   double ystep = (yrange[1] - yrange[0]) / static_cast<double>(divisions);
   
-  std::cout << "xstep: " << xstep << " ystep: " << ystep << std::endl;
+  //std::cout << "xstep: " << xstep << " ystep: " << ystep << std::endl;
   
   for(int x = 0; x < divisions; x++)
     {
@@ -123,7 +123,7 @@ void CreateSurface(Model* model, double xrange[2], double yrange[2], int divisio
   delaunay->SetInput(polydata);
   delaunay->Update();
  
-  surface = delaunay->GetOutput();
+  surface->ShallowCopy(delaunay->GetOutput());
   
 }
 
@@ -174,7 +174,7 @@ void PlotModels2D(std::vector<Model*> models, std::vector<vnl_vector<double> > d
     vtkSmartPointer<vtkPolyData> surface = 
       vtkSmartPointer<vtkPolyData>::New();
       
-    std::cout << "Model " << i << " dimensionality: " << models[i]->GetDimensionality() << std::endl;
+    //std::cout << "Model " << i << " dimensionality: " << models[i]->GetDimensionality() << std::endl;
     double xrange[2] = {models[i]->GetMean()(0) - 2.0, models[i]->GetMean()(0) + 2.0};
     double yrange[2] = {models[i]->GetMean()(1) - 2.0, models[i]->GetMean()(1) + 2.0};
     CreateSurface(models[i], xrange, yrange, 20, surface);
@@ -213,7 +213,7 @@ void PlotPoints(std::vector<double> points, vtkSmartPointer<vtkDenseArray<double
 
   table->SetNumberOfRows(points.size());
 
-  for (int i = 0; i < points.size(); ++i)
+  for(unsigned int i = 0; i < points.size(); ++i)
     {
     table->SetValue(i, 0, points[i]);
     table->SetValue(i, 1, 0);
@@ -248,4 +248,14 @@ void PlotPoints(std::vector<double> points, vtkSmartPointer<vtkDenseArray<double
   renderWindowInteractor->Initialize();
   renderWindowInteractor->Start();
 
+}
+
+void OutputModelInfo(std::vector<Model*> models)
+{
+  for(unsigned int i = 0; i < models.size(); i++)
+    {
+    std::cout << "Model " << i << " : Mean = " << models[i]->GetMean()
+              << " Variance = " << models[i]->GetVariance()
+              << " Mixing coefficient = " << models[i]->GetMixingCoefficient() << std::endl;
+    }
 }

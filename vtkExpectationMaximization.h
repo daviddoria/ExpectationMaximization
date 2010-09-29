@@ -15,7 +15,7 @@ public:
   vtkTypeMacro(vtkExpectationMaximization,vtkPolyDataAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  int GetNumberOfModels() {return this->Models.size();}
+  unsigned int GetNumberOfModels() {return this->Models.size();}
 
   vtkSetMacro(MaxIterations, int);
 
@@ -24,11 +24,16 @@ public:
   void SetData(std::vector<vnl_vector<double> > data){this->Data = data;}
   void SetModels(std::vector<Model*> models) {this->Models = models;}
   void AddModel(Model* model) {this->Models.push_back(model);}
-  int NumberOfDataPoints() {return this->Data.size();}
+  unsigned int NumberOfDataPoints() {return this->Data.size();}
 
   std::vector<Model*> GetModels() {return this->Models;}
   Model* GetModel(int i) {return this->Models[i];}
 
+  void SetInitializationTechniqueToRandom(){this->InitializationTechnique = RANDOM;}
+  void SetInitializationTechniqueToKMeans(){this->InitializationTechnique = KMEANS;}
+  
+  double WeightedEvaluate(vnl_vector<double> x);
+  
 protected:
   vtkExpectationMaximization();
 
@@ -41,6 +46,13 @@ protected:
   std::vector<vnl_vector<double> > Data;
 
   vtkSmartPointer<vtkDenseArray<double> > Responsibilities;
+  
+  void RandomlyInitializeModels();
+  void KMeansInitializeModels();
+  
+  enum InitializationEnum {RANDOM, KMEANS};
+  
+  int InitializationTechnique;
 
 private:
   vtkExpectationMaximization(const vtkExpectationMaximization&);  // Not implemented.

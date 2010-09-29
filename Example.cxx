@@ -17,11 +17,11 @@ int main(int, char*[])
 {
   //Test1DEvaluation();
   //TestNDEvaluation();
-  
+
   //Test1D();
   TestND();
-  
- 
+
+
   return EXIT_SUCCESS;
 }
 
@@ -92,16 +92,16 @@ void TestNDEvaluation()
 {
   GaussianND p;
   p.SetDimensionality(1);
-  
+
   vnl_vector<double> mean(1);
   mean(0) = 0;
   p.SetMean(mean);
-  
+
   vnl_matrix<double> variance(1,1);
   variance(0,0) = 2.0;
-  
+
   p.SetVariance(variance);
-  
+
   vnl_vector<double> x(1);
   x(0) = 0.3;
   std::cout << "ND: " << p.Evaluate(x) << std::endl;
@@ -109,9 +109,9 @@ void TestNDEvaluation()
 
 void Test1D()
 {
-   
+
   int dimensionality = 1;
-  
+
   // Generate some data
   std::vector<vnl_vector<double> > data = GenerateData(40, dimensionality);
 
@@ -122,9 +122,9 @@ void Test1D()
     {
     Model* model = new Gaussian1D;
     model->SetDimensionality(dimensionality);
-    
+
     dynamic_cast<Gaussian1D*>(model)->SetMean(vtkMath::Random(-5, 5));
-    
+
     dynamic_cast<Gaussian1D*>(model)->SetVariance(vtkMath::Random(0, 3));
     model->SetMixingCoefficient(1./models.size());
     models[i] = model;
@@ -148,13 +148,16 @@ void Test1D()
   //OutputModelInfo(expectationMaximization->GetModels());
   PlotModels1D(expectationMaximization->GetModels(), range);
 
+  vnl_vector<double> v(1);
+  v(0) = 2;
+  std::cout << "WeightedEvaluate(2) = " << expectationMaximization->WeightedEvaluate(v) << std::endl;
 }
 
 void TestND()
 {
-  
+
   int dimensionality = 2;
-  
+
   // Generate some data
   std::vector<vnl_vector<double> > data = GenerateData(40, dimensionality);
 
@@ -166,35 +169,31 @@ void TestND()
     Model* model = new GaussianND;
     model->SetDimensionality(dimensionality);
     model->Init();
-    vnl_vector<double> mean(2);
-    mean(0) = vtkMath::Random(-5, 5);
-    mean(1) = vtkMath::Random(-5, 5);
-    model->SetMean(mean);
-    vnl_matrix<double> variance(2,2);
-    variance(0,0) = vtkMath::Random(0, 3);
-    variance(1,1) = vtkMath::Random(0, 3);
-    variance(1,0) = 0;
-    variance(0,1) = 0;
-    model->SetVariance(variance);
-    model->SetMixingCoefficient(1./models.size());
     models[i] = model;
     }
 
   // Display initial model
-  std::cout << "Randomly initialized model:" << std::endl;
+  //std::cout << "Randomly initialized model:" << std::endl;
   //OutputModelInfo(models);
-  PlotModels2D(models, data);
+  //PlotModels2D(models, data);
 
   vtkSmartPointer<vtkExpectationMaximization> expectationMaximization =
     vtkSmartPointer<vtkExpectationMaximization>::New();
   expectationMaximization->SetData(data);
   expectationMaximization->SetModels(models);
   expectationMaximization->SetMinChange(1e-5);
-
+  //expectationMaximization->SetInitializationTechniqueToRandom();
+  expectationMaximization->SetInitializationTechniqueToKMeans();
   expectationMaximization->Update();
 
+  vnl_vector<double> a(2);
+  a(0) = -5;
+  a(1) = -5;
+  std::cout << "a: " << a << " likelihood: " << expectationMaximization->GetModel(0)->WeightedEvaluate(a) << std::endl;
+  std::cout << "a: " << a << " likelihood: " << expectationMaximization->WeightedEvaluate(a) << std::endl;
+
   std::cout << "Final models:" << std::endl;
-  //OutputModelInfo(expectationMaximization->GetModels());
+  OutputModelInfo(expectationMaximization->GetModels());
   PlotModels2D(expectationMaximization->GetModels(), data);
- 
+
 }
