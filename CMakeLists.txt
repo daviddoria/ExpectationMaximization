@@ -10,8 +10,15 @@ INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
 
 add_subdirectory(KMeansClustering)
 
-ADD_EXECUTABLE(ExpectationMaximization Example.cxx vtkExpectationMaximization.cxx Gaussian1D.cxx GaussianND.cxx Model.cxx Plotting.cxx)
+add_library(libExpectationMaximization vtkExpectationMaximization.cxx Gaussian1D.cxx GaussianND.cxx Model.cxx Plotting.cxx)
+TARGET_LINK_LIBRARIES(libExpectationMaximization
+libKMeansClustering
+${VTK_LIBRARIES}
+vnl vnl_algo)
+
+ADD_EXECUTABLE(ExpectationMaximization Example.cxx)
 TARGET_LINK_LIBRARIES(ExpectationMaximization
+libExpectationMaximization
 libKMeansClustering
 ${VTK_LIBRARIES}
 vnl vnl_algo)
