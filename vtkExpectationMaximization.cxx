@@ -1,12 +1,17 @@
+// Custom
 #include "vtkExpectationMaximization.h"
 #include "Plotting.h"
-#include "vtkKMeansClustering.h"
 
+// Submodules
+#include "KMeansClustering/vtkKMeansClustering.h"
+
+// VTK
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkObjectFactory.h"
 #include "vtkMath.h"
 
+// VNL
 #include <vnl/vnl_vector.h>
 
 vtkStandardNewMacro(vtkExpectationMaximization);
@@ -214,7 +219,8 @@ void vtkExpectationMaximization::KMeansInitializeModels()
   vtkSmartPointer<vtkKMeansClustering> kmeans =
     vtkSmartPointer<vtkKMeansClustering>::New();
   kmeans->SetK(this->GetNumberOfModels());
-  kmeans->SetInputConnection(polydata->GetProducerPort());
+  std::cout << "Set K to " << this->GetNumberOfModels() << std::endl;
+  kmeans->SetInputData(polydata);
   kmeans->Update();
 
   vtkPolyData* clusterCenters = kmeans->GetOutput(1);

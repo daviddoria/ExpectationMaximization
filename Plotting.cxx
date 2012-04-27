@@ -70,15 +70,15 @@ void PlotModels1D(std::vector<Model*> models, double range[2])
     vtkSmartPointer<vtkChartXY>::New();
   view->GetScene()->AddItem(chart);
   vtkPlot *line = chart->AddPlot(vtkChart::LINE);
-  line->SetInput(table, 0, 1);
+  line->SetInputData(table, 0, 1);
   line->SetColor(0, 255, 0, 255);
   line->SetWidth(1.0);
   line = chart->AddPlot(vtkChart::LINE);
-  line->SetInput(table, 0, 2);
+  line->SetInputData(table, 0, 2);
   line->SetColor(255, 0, 0, 255);
   line->SetWidth(5.0);
   line = chart->AddPlot(vtkChart::LINE);
-  line->SetInput(table, 0, 3);
+  line->SetInputData(table, 0, 3);
   line->SetColor(0, 0, 255, 255);
   line->SetWidth(5.0);
 
@@ -120,7 +120,7 @@ void CreateSurface(Model* model, double xrange[2], double yrange[2], int divisio
 
   vtkSmartPointer<vtkDelaunay2D> delaunay =
     vtkSmartPointer<vtkDelaunay2D>::New();
-  delaunay->SetInput(polydata);
+  delaunay->SetInputData(polydata);
   delaunay->Update();
  
   surface->ShallowCopy(delaunay->GetOutput());
@@ -156,7 +156,7 @@ void PlotModels2D(std::vector<Model*> models, std::vector<vnl_vector<double> > d
   
   vtkSmartPointer<vtkVertexGlyphFilter> glyphFilter = 
     vtkSmartPointer<vtkVertexGlyphFilter>::New();
-  glyphFilter->SetInputConnection(pointsPolyData->GetProducerPort());
+  glyphFilter->SetInputData(pointsPolyData);
   glyphFilter->Update();
   
   // Create a mapper and actor
@@ -182,7 +182,7 @@ void PlotModels2D(std::vector<Model*> models, std::vector<vnl_vector<double> > d
     // Create a mapper and actor
     vtkSmartPointer<vtkPolyDataMapper> mapper = 
       vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(surface->GetProducerPort());
+    mapper->SetInputData(surface);
   
     vtkSmartPointer<vtkActor> actor = 
       vtkSmartPointer<vtkActor>::New();
@@ -229,15 +229,15 @@ void PlotPoints(std::vector<double> points, vtkSmartPointer<vtkDenseArray<double
     vtkSmartPointer<vtkChartXY>::New();
   view->GetScene()->AddItem(chart);
   vtkPlot *line = chart->AddPlot(vtkChart::LINE);
-  line->SetInput(table, 0, 1);
+  line->SetInputData(table, 0, 1);
   line->SetColor(0, 255, 0, 255);
   line->SetWidth(1.0);
   line = chart->AddPlot(vtkChart::LINE);
-  line->SetInput(table, 0, 2);
+  line->SetInputData(table, 0, 2);
   line->SetColor(255, 0, 0, 255);
   line->SetWidth(5.0);
   line = chart->AddPlot(vtkChart::LINE);
-  line->SetInput(table, 0, 3);
+  line->SetInputData(table, 0, 3);
   line->SetColor(0, 0, 255, 255);
   line->SetWidth(5.0);
 
