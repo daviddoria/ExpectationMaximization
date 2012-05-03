@@ -5,6 +5,10 @@ PROJECT(ExpectationMaximization)
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE(${VTK_USE_FILE})
 
+if(NOT VTK_Group_Views)
+  message(FATAL_ERROR "You must build VTK with VTK_Group_Views=ON")
+endif()
+
 FIND_PACKAGE(VXL REQUIRED)
 INCLUDE(${VXL_CMAKE_DIR}/UseVXL.cmake)
 
