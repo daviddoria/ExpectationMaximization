@@ -5,8 +5,12 @@ PROJECT(ExpectationMaximization)
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE(${VTK_USE_FILE})
 
-if(NOT VTK_Group_Views)
-  message(FATAL_ERROR "You must build VTK with VTK_Group_Views=ON")
+if(NOT vtkViewsContext2D_LOADED)
+  message(FATAL_ERROR "vtkViewsContext2D is required but not available")
+endif()
+
+if(NOT vtkChartsCore_LOADED)
+  message(FATAL_ERROR "vtkChartsCore is required but not available")
 endif()
 
 FIND_PACKAGE(VXL REQUIRED)
