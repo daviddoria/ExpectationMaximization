@@ -17,9 +17,9 @@ SIGMA = (1/N) sum_{n=1}^N (x_n - u)(x_n - u)^T
 class GaussianND : public Model
 {
   public:
-    virtual double Evaluate(vnl_vector<double> x);
+    virtual double Evaluate(Eigen::VectorXd x);
 
-    virtual double WeightedEvaluate(vnl_vector<double> x);
+    virtual double WeightedEvaluate(Eigen::VectorXd x);
 };
 
 #endif

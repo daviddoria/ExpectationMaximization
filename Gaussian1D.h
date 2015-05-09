@@ -36,7 +36,7 @@ class Gaussian1D : public GaussianND
     using GaussianND::WeightedEvaluate;
     double WeightedEvaluate(double x)
     {
-      vnl_vector<double> xvec(1);
+      Eigen::VectorXd xvec(1);
       xvec(0) = x;
       return WeightedEvaluate(xvec);
     }

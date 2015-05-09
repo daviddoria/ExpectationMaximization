@@ -48,22 +48,22 @@ unsigned int Model::GetDimensionality()
   return this->Dimensionality;
 }
 
-vnl_vector<double> Model::GetMean()
+Eigen::VectorXd Model::GetMean()
 {
   return this->Mean;
 }
 
-void Model::SetMean(vnl_vector<double> m)
+void Model::SetMean(Eigen::VectorXd m)
 {
   this->Mean = m;
 }
 
-vnl_matrix<double> Model::GetVariance()
+Eigen::MatrixXd Model::GetVariance()
 {
   return this->Variance;
 }
 
-void Model::SetVariance(vnl_matrix<double> v)
+void Model::SetVariance(Eigen::MatrixXd v)
 {
   this->Variance = v;
 }

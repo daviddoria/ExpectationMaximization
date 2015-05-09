@@ -8,10 +8,7 @@
 #include <cmath>
 #include <vector>
 
-#include <vnl/vnl_matrix.h>
-#include <vnl/vnl_vector.h>
-#include <vnl/algo/vnl_determinant.h>
-#include <vnl/vnl_inverse.h>
+#include <Eigen/Dense>
 
 class Model
 {
@@ -24,24 +21,24 @@ class Model
     void SetDimensionality(unsigned int dim);
     unsigned int GetDimensionality();
     
-    vnl_vector<double> GetMean();
-    void SetMean(vnl_vector<double> m);
+    Eigen::VectorXd GetMean();
+    void SetMean(Eigen::VectorXd m);
 
-    vnl_matrix<double> GetVariance();
-    void SetVariance(vnl_matrix<double> v);
+    Eigen::MatrixXd GetVariance();
+    void SetVariance(Eigen::MatrixXd v);
 
     double GetMixingCoefficient();
     void SetMixingCoefficient(double m);
 
-    virtual double Evaluate(vnl_vector<double> x) = 0;
+    virtual double Evaluate(Eigen::VectorXd x) = 0;
 
-    virtual double WeightedEvaluate(vnl_vector<double> x) = 0;
+    virtual double WeightedEvaluate(Eigen::VectorXd x) = 0;
     
   protected:
 
-    vnl_vector<double> Mean;
+    Eigen::VectorXd Mean;
 
-    vnl_matrix<double> Variance;
+    Eigen::MatrixXd Variance;
     
     unsigned int Dimensionality;
     

@@ -1,47 +1,25 @@
 // Custom
-#include "vtkExpectationMaximization.h"
-#include "Plotting.h"
+#include "ExpectationMaximization.h"
 
 // Submodules
-#include "KMeansClustering/vtkKMeansClustering.h"
-
-// VTK
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkObjectFactory.h"
-#include "vtkMath.h"
-
-// VNL
-#include <vnl/vnl_vector.h>
-
-vtkStandardNewMacro(vtkExpectationMaximization);
+#include "KMeansClustering/KMeansClustering.h"
 
 // good slides: http://www.slideshare.net/petitegeek/expectation-maximization-and-gaussian-mixture-models
 
 bool IsNaN(const double a);
 
-vtkExpectationMaximization::vtkExpectationMaximization()
+ExpectationMaximization::ExpectationMaximization()
 {
-  // Filter
-  this->SetNumberOfInputPorts(0);
-  this->SetNumberOfOutputPorts(0);
-
   // Defaults
   this->MaxIterations = 10;
   this->MinChange = 1e-3;
   this->InitializationTechnique = KMEANS;
-
-  // Initializations
-  this->Responsibilities = vtkSmartPointer<vtkDenseArray<double> >::New();
 }
 
-int vtkExpectationMaximization::RequestData(
-                              vtkInformation *vtkNotUsed(request),
-    vtkInformationVector **inputVector,
-                                      vtkInformationVector *outputVector)
+void ExpectationMaximization::Compute()
 {
-  std::cout << "vtkExpectationMaximization::RequestData" << std::endl;
-  this->Responsibilities->Resize(this->Data.size(),this->GetNumberOfModels());
+  std::cout << "ExpectationMaximization::Compute" << std::endl;
+  this->Responsibilities.resize(this->Data.size(),this->GetNumberOfModels());
 
   if(this->InitializationTechnique == RANDOM)
     {
@@ -52,7 +30,7 @@ int vtkExpectationMaximization::RequestData(
     KMeansInitializeModels();
     }
 
-  OutputModelInfo(this->Models);
+  //OutputModelInfo(this->Models);
 
   bool done = false;
   int iter = 0;
@@ -81,22 +59,22 @@ int vtkExpectationMaximization::RequestData(
       {
       double normalization = 0.0;
       for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
-	{
-	double val = this->Models[model]->WeightedEvaluate(this->Data[point]);
-	if(IsNaN(val))
-	  {
-	  std::cout << "val of " << this->Data[point] << " is nan for model " << model << "!" << std::endl;
-	  OutputModelInfo(this->Models);
-	  exit(-1);
-	  }
-	normalization += val;
-	}
+        {
+        double val = this->Models[model]->WeightedEvaluate(this->Data[point]);
+        if(IsNaN(val))
+          {
+          std::cout << "val of " << this->Data[point] << " is nan for model " << model << "!" << std::endl;
+          //OutputModelInfo(this->Models);
+          exit(-1);
+          }
+        normalization += val;
+        }
       //std::cout << "normalization: " << normalization << std::endl;
       for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
-	{
-	double resp = this->Models[model]->WeightedEvaluate(this->Data[point]);
-	this->Responsibilities->SetValue(point, model, resp / normalization);
-	}
+        {
+        double resp = this->Models[model]->WeightedEvaluate(this->Data[point]);
+        this->Responsibilities(point, model) = resp / normalization;
+        }
       }
 
     // M step - estimate parameters based on the new responsibilities
@@ -105,23 +83,23 @@ int vtkExpectationMaximization::RequestData(
       double sumResponsibilities = 0;
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
         {
-        sumResponsibilities += this->Responsibilities->GetValue(i, model);
+        sumResponsibilities += this->Responsibilities(i, model);
         }
       //std::cout << "sumResponsibilities : " << sumResponsibilities << std::endl;;
 
-      vnl_vector<double> newMean(this->Models[0]->GetDimensionality(), 0);
+      Eigen::VectorXd newMean(this->Models[0]->GetDimensionality(), 0);
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
         {
-        newMean += this->Responsibilities->GetValue(i, model) * this->Data[i];
+        newMean += this->Responsibilities(i, model) * this->Data[i];
         }
       newMean /= sumResponsibilities;
       this->Models[model]->SetMean(newMean);
 
-      vnl_matrix<double> newVariance(this->Models[0]->GetDimensionality(), this->Models[0]->GetDimensionality(), 0);
+      Eigen::MatrixXd newVariance(this->Models[0]->GetDimensionality(), this->Models[0]->GetDimensionality(), 0);
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
         {
-	//SIGMA = (1/N) sum_{n=1}^N (x_n - u)(x_n - u)^T
-        newVariance += this->Responsibilities->GetValue(i,model) * outer_product(this->Data[i] - newMean, this->Data[i] - newMean);
+        //SIGMA = (1/N) sum_{n=1}^N (x_n - u)(x_n - u)^T
+        newVariance += this->Responsibilities(i,model) * (this->Data[i] - newMean) * (this->Data[i] - newMean).transpose();
         }
       newVariance /= sumResponsibilities;
       this->Models[model]->SetVariance(newVariance);
@@ -133,7 +111,7 @@ int vtkExpectationMaximization::RequestData(
       double sumResponsibilities = 0;
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
         {
-        sumResponsibilities += this->Responsibilities->GetValue(i, model);
+        sumResponsibilities += this->Responsibilities(i, model);
         }
       this->Models[model]->SetMixingCoefficient(sumResponsibilities/static_cast<double>(this->NumberOfDataPoints()));
       }
@@ -147,7 +125,7 @@ int vtkExpectationMaximization::RequestData(
     for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
       {
       //double meanDiff = fabs(this->Models[model]->GetMean()(0) - lastModels[model]->GetMean()(0));
-      double meanDiff = (this->Models[model]->GetMean() - lastModels[model]->GetMean()).magnitude();
+      double meanDiff = (this->Models[model]->GetMean() - lastModels[model]->GetMean()).norm();
 
       //double varianceDiff = fabs(this->Models[model]->GetVariance()(0,0) - lastModels[model]->GetVariance()(0,0));
 
@@ -164,18 +142,16 @@ int vtkExpectationMaximization::RequestData(
   }while(!done && (iter < this->MaxIterations) );
 
   std::cout << "EM performed " << iter << " iterations." << std::endl;
-
-  return 1;
 }
 
-void vtkExpectationMaximization::RandomlyInitializeModels()
+void ExpectationMaximization::RandomlyInitializeModels()
 {
   unsigned int dim = this->Models[0]->GetDimensionality();
 
   for(unsigned int model = 0; model < this->Models.size(); model++)
     {
     // Mean
-    vnl_vector<double> mean(dim);
+    Eigen::VectorXd mean(dim);
     for(unsigned int d = 0; d < dim; d++)
       {
       mean(d) = vtkMath::Random(-5, 5);
@@ -196,60 +172,34 @@ void vtkExpectationMaximization::RandomlyInitializeModels()
     }
 }
 
-void vtkExpectationMaximization::KMeansInitializeModels()
+void ExpectationMaximization::KMeansInitializeModels()
 {
-  // Convert to a format suitable for kmeans
-  vtkSmartPointer<vtkPoints> points =
-    vtkSmartPointer<vtkPoints>::New();
-  for(unsigned int i = 0; i < this->Data.size(); i++)
-    {
-    double p[3] = {0,0,0};
-    for(unsigned int d = 0; d < this->Data[i].size(); d++) // Assumes data is 3d or lower
-      {
-      p[d] = this->Data[i](d);
-      }
-    points->InsertNextPoint(p);
-    }
-
-  vtkSmartPointer<vtkPolyData> polydata =
-    vtkSmartPointer<vtkPolyData>::New();
-  polydata->SetPoints(points);
 
   // Initialize with KMeans
-  vtkSmartPointer<vtkKMeansClustering> kmeans =
-    vtkSmartPointer<vtkKMeansClustering>::New();
-  kmeans->SetK(this->GetNumberOfModels());
-  std::cout << "Set K to " << this->GetNumberOfModels() << std::endl;
-  kmeans->SetInputData(polydata);
-  kmeans->Update();
+  KMeansClustering kmeans;
+  kmeans.SetK(this->GetNumberOfModels());
+  kmeans.SetPoints(this->Data);
+  kmeans.Cluster();
 
-  vtkPolyData* clusterCenters = kmeans->GetOutput(1);
+  VectorOfPoints clusterCenters = kmeans.GetClusterCenters();
 
   unsigned int dim = this->Models[0]->GetDimensionality();
 
   for(unsigned int model = 0; model < this->Models.size(); model++)
     {
     // Set initial EM means from KMeans cluster centers
-    vnl_vector<double> mean(dim);
-    double p[3];
-    clusterCenters->GetPoint(model, p);
-    for(unsigned int d = 0; d < dim; d++)
-      {
-      mean(d) = p[d];
-      }
-    this->Models[model]->SetMean(mean);
+    this->Models[model]->SetMean(clusterCenters[model]);
 
     // Set initial EM variances from KMeans cluster bounds
-
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    kmeans->GetPointsWithLabel(model, points);
+    kmeans.GetPointsWithLabel(model, points);
     double bounds[6];
     points->GetBounds(bounds);
 
     std::vector<double> variance(dim);
     for(unsigned int d = 0; d < dim; d++)
       {
-      variance[d] = bounds[2*d + 1] - bounds[2*d];
+      variance[d] = bounds[2*d + 1] - bounds[2*d]; // max - min
       }
 
     this->Models[model]->SetDiagonalCovariance(variance);
@@ -259,15 +209,6 @@ void vtkExpectationMaximization::KMeansInitializeModels()
     }
 }
 
-void vtkExpectationMaximization::PrintSelf(ostream& os, vtkIndent indent)
-{
-  this->Superclass::PrintSelf(os,indent);
-
-  os << indent << "NumberOfModels: " << this->GetNumberOfModels() << std::endl
-                << "MaxIterations: " << this->MaxIterations << std::endl
-                << "MinChange: " << this->MinChange << std::endl;
-
-}
 
 bool IsNaN(const double a)
 {
@@ -278,7 +219,7 @@ bool IsNaN(const double a)
   return false;
 }
 
-double vtkExpectationMaximization::WeightedEvaluate(vnl_vector<double> x)
+double ExpectationMaximization::WeightedEvaluate(Eigen::VectorXd x)
 {
   double sum = 0;
   for(unsigned int i = 0; i < this->Models.size(); i++)
