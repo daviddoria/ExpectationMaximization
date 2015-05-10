@@ -13,8 +13,6 @@ sigma^2 = (1/N) sum_{n=1}^N (x_n - u)^2
 
 #include "GaussianND.h"
 
-#include <vtkMath.h>
-
 #include <cmath>
 #include <vector>
 

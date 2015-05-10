@@ -10,16 +10,15 @@
 class ExpectationMaximization
 {
 public:
-  typedef typename KMeansClustering::VectorOfPoints VectorOfPoints;
-
+  /* Constructor. */
   ExpectationMaximization();
 
   unsigned int GetNumberOfModels() {return this->Models.size();}
 
-  void SetData(VectorOfPoints data){this->Data = data;}
+  void SetData(Eigen::MatrixXd data){this->Data = data;}
   void SetModels(std::vector<Model*> models) {this->Models = models;}
   void AddModel(Model* model) {this->Models.push_back(model);}
-  unsigned int NumberOfDataPoints() {return this->Data.size();}
+  unsigned int NumberOfDataPoints() {return this->Data.cols();}
 
   std::vector<Model*> GetModels() {return this->Models;}
   Model* GetModel(int i) {return this->Models[i];}
@@ -31,13 +30,15 @@ public:
 
   void Compute();
 
+  void SetMinChange(const float minChange);
+
 protected:
 
   int MaxIterations;
-  int MinChange;
+  float MinChange;
 
   std::vector<Model*> Models;
-  VectorOfPoints Data;
+  Eigen::MatrixXd Data;
 
   Eigen::MatrixXd Responsibilities;
   

@@ -1,10 +1,6 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include <vtkMath.h>
-#include <vtkSmartPointer.h>
-#include <vtkDenseArray.h>
-
 #include <cmath>
 #include <vector>
 

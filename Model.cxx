@@ -3,14 +3,14 @@
 void Model::Init()
 {
   // Initialize mean
-  this->Mean.set_size(this->Dimensionality);
+  this->Mean.resize(this->Dimensionality);
   for(unsigned int i = 0; i < this->Dimensionality; i++)
     {
     this->Mean(i) = 0;
     }
   
   // Initialize variance
-  this->Variance.set_size(this->Dimensionality, this->Dimensionality);
+  this->Variance.resize(this->Dimensionality, this->Dimensionality);
   std::vector<double> diagonal;
   for(unsigned int i = 0; i < this->Dimensionality; i++)
     {

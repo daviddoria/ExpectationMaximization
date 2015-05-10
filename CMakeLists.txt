@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 2.6)
 
 PROJECT(ExpectationMaximization)
 
-FIND_PACKAGE(VTK REQUIRED)
-INCLUDE(${VTK_USE_FILE})
+# C++11 support
+if(UNIX)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=gnu++11")
+endif(UNIX)
 
 #### Eigen ####
 # Tell CMake to also look in the source directory to find some .cmake files
@@ -27,12 +29,9 @@ add_subdirectory(KMeansClustering)
 
 add_library(libExpectationMaximization ExpectationMaximization.cpp Gaussian1D.cxx GaussianND.cxx Model.cxx)
 TARGET_LINK_LIBRARIES(libExpectationMaximization
-KMeansClustering
-${VTK_LIBRARIES})
+KMeansClustering)
 
 ADD_EXECUTABLE(ExpectationMaximization Example.cxx)
 TARGET_LINK_LIBRARIES(ExpectationMaximization
 libExpectationMaximization
-KMeansClustering
-${VTK_LIBRARIES})
-
+KMeansClustering)
