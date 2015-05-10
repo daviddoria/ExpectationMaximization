@@ -12,23 +12,25 @@ class Model
     
     void Init();
     
-    void SetDiagonalCovariance(std::vector<double> diagonal);
+    void SetDiagonalCovariance(const Eigen::VectorXd& diagonal);
     
-    void SetDimensionality(unsigned int dim);
+    void SetDimensionality(const unsigned int dim);
     unsigned int GetDimensionality();
     
-    Eigen::VectorXd GetMean();
+    Eigen::VectorXd GetMean() const;
     void SetMean(Eigen::VectorXd m);
 
-    Eigen::MatrixXd GetVariance();
+    Eigen::MatrixXd GetVariance() const;
     void SetVariance(Eigen::MatrixXd v);
 
-    double GetMixingCoefficient();
-    void SetMixingCoefficient(double m);
+    double GetMixingCoefficient() const;
+    void SetMixingCoefficient(const double m);
 
-    virtual double Evaluate(Eigen::VectorXd x) = 0;
+    virtual double Evaluate(const Eigen::VectorXd x) const = 0;
 
-    virtual double WeightedEvaluate(Eigen::VectorXd x) = 0;
+    virtual double WeightedEvaluate(const Eigen::VectorXd x) const = 0;
+
+    virtual void Print() const = 0;
     
   protected:
 
@@ -39,8 +41,6 @@ class Model
     unsigned int Dimensionality;
     
     double MixingCoefficient;
-   
-   
 };
 
 #endif

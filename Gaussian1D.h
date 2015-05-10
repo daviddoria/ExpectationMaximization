@@ -22,22 +22,24 @@ class Gaussian1D : public GaussianND
     
     Gaussian1D();
     
-    double GetMean(){return this->Mean(0);}
+    double GetMean() const {return this->Mean(0);}
     void SetMean(double m){this->Mean(0) = m;}
 
-    double GetVariance(){return this->Variance(0,0);}
+    double GetVariance() const {return this->Variance(0,0);}
     void SetVariance(double v){this->Variance(0,0) = v;}
 
     using GaussianND::Evaluate;
-    double Evaluate(double x);
+    double Evaluate(const double x) const;
 
     using GaussianND::WeightedEvaluate;
-    double WeightedEvaluate(double x)
+    double WeightedEvaluate(const double x) const
     {
       Eigen::VectorXd xvec(1);
       xvec(0) = x;
       return WeightedEvaluate(xvec);
     }
+
+    void Print() const;
 
 };
 

@@ -1,6 +1,7 @@
 #include "Gaussian1D.h"
 
 #include <cmath>
+#include <iostream>
 
 Gaussian1D::Gaussian1D()
 {
@@ -13,7 +14,7 @@ Gaussian1D::Gaussian1D()
   this->Dimensionality = 1;
 }
 
-double Gaussian1D::Evaluate(double x)
+double Gaussian1D::Evaluate(double x) const
 {
   /*
   vnl_vector<double> xvec(1);
@@ -22,4 +23,10 @@ double Gaussian1D::Evaluate(double x)
   */
   
   return (1./sqrt(2.*M_PI*this->Variance(0,0))) * exp(-(pow(x-this->Mean(0),2))/(2.*this->Variance(0,0)));
+}
+
+void Gaussian1D::Print() const
+{
+    std::cout << "Mean: " << this->Mean << std::endl;
+    std::cout << "Variance: " << this->Variance << std::endl;
 }

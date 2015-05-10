@@ -1,6 +1,7 @@
 // STL
 #include <iostream>
 #include <random>
+#include <chrono>
 
 // Custom
 #include "ExpectationMaximization.h"
@@ -53,10 +54,10 @@ void ExpectationMaximization::Compute()
     // Save a snapshot of the current models
     //std::copy(this->Models.begin(), this->Models.end(), lastModels.begin());
     for(unsigned int i = 0; i < this->Models.size(); i++)
-      {
+    {
       lastModels[i]->SetVariance(this->Models[i]->GetVariance());
       lastModels[i]->SetMean(this->Models[i]->GetMean());
-      }
+    }
 
     // E step - evaluate responsibilities
     for(unsigned int point = 0; point < this->NumberOfDataPoints(); point++)
@@ -91,7 +92,7 @@ void ExpectationMaximization::Compute()
       }
       //std::cout << "sumResponsibilities : " << sumResponsibilities << std::endl;;
 
-      Eigen::VectorXd newMean(this->Models[0]->GetDimensionality(), 0);
+      Eigen::VectorXd newMean = Eigen::VectorXd::Zero(this->Models[0]->GetDimensionality());
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
       {
         newMean += this->Responsibilities(i, model) * this->Data.col(i);
@@ -121,20 +122,12 @@ void ExpectationMaximization::Compute()
       this->Models[model]->SetMixingCoefficient(sumResponsibilities/static_cast<double>(this->NumberOfDataPoints()));
     }
 
-    //std::cout << "Models at iteration " << iter << std::endl;
-    //OutputModelInfo(this->Models);
-    //PlotModels(this->Models, range);
-
     // Check if we have converged
     done = true; // assume we have converged until we see otherwise
     for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
     {
-      //double meanDiff = fabs(this->Models[model]->GetMean()(0) - lastModels[model]->GetMean()(0));
       double meanDiff = (this->Models[model]->GetMean() - lastModels[model]->GetMean()).norm();
 
-      //double varianceDiff = fabs(this->Models[model]->GetVariance()(0,0) - lastModels[model]->GetVariance()(0,0));
-
-      //if((meanDiff > this->MinChange) || (varianceDiff > this->MinChange) )
       // If any of the models have not converged, we need to continue
       std::cout << "model " << model << " meanDiff: " << meanDiff << std::endl;
       if((meanDiff > this->MinChange))
@@ -167,12 +160,12 @@ void ExpectationMaximization::RandomlyInitializeModels()
     this->Models[model]->SetMean(mean);
 
     // Variance
-    std::vector<double> variance(dim);
+    Eigen::VectorXd variance(dim);
 
     std::uniform_real_distribution<double> varianceDistribution(0.0,3.0);
     for(unsigned int d = 0; d < dim; d++)
     {
-      variance[d] = varianceDistribution(generator);
+      variance(d) = varianceDistribution(generator);
     }
 
     this->Models[model]->SetDiagonalCovariance(variance);
@@ -196,7 +189,7 @@ void ExpectationMaximization::KMeansInitializeModels()
   unsigned int dim = this->Models[0]->GetDimensionality();
 
   for(unsigned int modelId = 0; modelId < this->Models.size(); modelId++)
-    {
+  {
     // Set initial EM means from KMeans cluster centers
     this->Models[modelId]->SetMean(clusterCenters.col(modelId));
 
@@ -206,19 +199,18 @@ void ExpectationMaximization::KMeansInitializeModels()
     Eigen::VectorXd minValues = points.rowwise().minCoeff();
     Eigen::VectorXd maxValues = points.rowwise().maxCoeff();
 
-    std::vector<double> range(dim);
+    Eigen::VectorXd range(dim);
     for(unsigned int d = 0; d < dim; d++)
-      {
-      range[d] = maxValues(d) - minValues(d);
-      }
+    {
+      range(d) = maxValues(d) - minValues(d);
+    }
 
     this->Models[modelId]->SetDiagonalCovariance(range);
 
     // The ratio of points in the cluster to total points
     this->Models[modelId]->SetMixingCoefficient(static_cast<float>(kmeans.GetIndicesWithLabel(modelId).size())/static_cast<float>(this->Data.cols()));
-    }
+  }
 }
-
 
 bool IsNaN(const double a)
 {
@@ -229,7 +221,7 @@ bool IsNaN(const double a)
   return false;
 }
 
-double ExpectationMaximization::WeightedEvaluate(Eigen::VectorXd x)
+double ExpectationMaximization::WeightedEvaluate(const Eigen::VectorXd x) const
 {
   double sum = 0;
   for(unsigned int i = 0; i < this->Models.size(); i++)
@@ -242,4 +234,25 @@ double ExpectationMaximization::WeightedEvaluate(Eigen::VectorXd x)
 void ExpectationMaximization::SetMinChange(const float minChange)
 {
     this->MinChange = minChange;
+}
+
+void ExpectationMaximization::SetMaxIterations(const unsigned int maxIterations)
+{
+    this->MaxIterations = maxIterations;
+}
+
+void ExpectationMaximization::SetRandom(const bool r)
+{
+  this->Random = r;
+}
+
+long int ExpectationMaximization::GetSeed() const
+{
+  if(this->Random)
+  {
+    auto now = std::chrono::system_clock::now();
+    return now.time_since_epoch().count();
+  }
+
+  return 0;
 }
