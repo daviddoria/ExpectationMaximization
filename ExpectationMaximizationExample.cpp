@@ -16,7 +16,7 @@ int main(int, char*[])
     Eigen::MatrixXd data = GenerateData(1000, dimensionality);
 
     // Initialize the model
-    std::vector<Model*> models(3);
+    std::vector<Model*> models(2);
 
     for(unsigned int i = 0; i < models.size(); i++)
     {
@@ -55,9 +55,9 @@ Eigen::MatrixXd GenerateData(const unsigned int numberOfSamplesPerGroup, const u
     data1.col(i) = v;
   }
 
-  // Mean 5, variance 1
+  // Mean 5, variance 2
   Eigen::MatrixXd data2(dimensionality, numberOfSamplesPerGroup);
-  std::normal_distribution<double> normalDistribution2(5,sqrt(1));
+  std::normal_distribution<double> normalDistribution2(5,sqrt(2));
   for(unsigned int i = 0; i < numberOfSamplesPerGroup; i++)
   {
     Eigen::VectorXd v(1);
@@ -65,19 +65,9 @@ Eigen::MatrixXd GenerateData(const unsigned int numberOfSamplesPerGroup, const u
     data2.col(i) = v;
   }
 
-  // Mean -5, variance 1.5
-  Eigen::MatrixXd data3(dimensionality, numberOfSamplesPerGroup);
-  std::normal_distribution<double> normalDistribution3(-5,sqrt(1.5));
-  for(unsigned int i = 0; i < numberOfSamplesPerGroup; i++)
-  {
-      Eigen::VectorXd v(1);
-      v(0) = normalDistribution3(generator);
-      data3.col(i) = v;
-  }
-
   // Concatentate the matrices horiztonally
-  Eigen::MatrixXd data(dimensionality, data1.cols() + data2.cols() + data3.cols());
-  data << data1, data2, data3;
+  Eigen::MatrixXd data(dimensionality, data1.cols() + data2.cols());
+  data << data1, data2;
 
   return data;
 }

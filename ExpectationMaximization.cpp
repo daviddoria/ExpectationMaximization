@@ -36,8 +36,6 @@ void ExpectationMaximization::Compute()
     KMeansInitializeModels();
   }
 
-  //OutputModelInfo(this->Models);
-
   bool done = false;
   int iter = 0;
 
@@ -51,9 +49,8 @@ void ExpectationMaximization::Compute()
 
   do
     {
-    std::cout << "EM iteration " << iter << std::endl;
+    std::cout << "EM iteration " << iter << "..." << std::endl;
     // Save a snapshot of the current models
-    //std::copy(this->Models.begin(), this->Models.end(), lastModels.begin());
     for(unsigned int i = 0; i < this->Models.size(); i++)
     {
       lastModels[i]->SetVariance(this->Models[i]->GetVariance());
@@ -70,7 +67,6 @@ void ExpectationMaximization::Compute()
         if(IsNaN(val))
         {
           std::cout << "val of " << this->Data.col(point) << " is nan for model " << model << "!" << std::endl;
-          //OutputModelInfo(this->Models);
           exit(-1);
         }
         normalization += val;
@@ -130,7 +126,6 @@ void ExpectationMaximization::Compute()
       double meanDiff = (this->Models[model]->GetMean() - lastModels[model]->GetMean()).norm();
 
       // If any of the models have not converged, we need to continue
-      std::cout << "model " << model << " meanDiff: " << meanDiff << std::endl;
       if((meanDiff > this->MinChange))
       {
         done = false;
@@ -169,7 +164,10 @@ void ExpectationMaximization::RandomlyInitializeModels()
       variance(d) = varianceDistribution(generator);
     }
 
-    this->Models[model]->SetDiagonalCovariance(variance);
+    Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dim, dim);
+    covariance.diagonal() = variance;
+
+    this->Models[model]->SetVariance(covariance);
 
     // Mixing coefficient
     this->Models[model]->SetMixingCoefficient(1./this->GetNumberOfModels());
@@ -199,13 +197,16 @@ void ExpectationMaximization::KMeansInitializeModels()
     Eigen::VectorXd minValues = points.rowwise().minCoeff();
     Eigen::VectorXd maxValues = points.rowwise().maxCoeff();
 
-    Eigen::VectorXd range(dim);
+    Eigen::VectorXd center(dim);
     for(unsigned int d = 0; d < dim; d++)
     {
-      range(d) = maxValues(d) - minValues(d);
+      center(d) = (maxValues(d) - minValues(d))/2.0f;
     }
 
-    this->Models[modelId]->SetDiagonalCovariance(range);
+    Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dim, dim);
+    covariance.diagonal() = center;
+
+    this->Models[modelId]->SetVariance(covariance);
 
     // The ratio of points in the cluster to total points
     this->Models[modelId]->SetMixingCoefficient(static_cast<float>(kmeans.GetIndicesWithLabel(modelId).size())/static_cast<float>(this->Data.cols()));

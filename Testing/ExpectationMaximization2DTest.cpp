@@ -3,39 +3,50 @@
 
 #include <iostream>
 #include <random>
-#include <chrono>
 
 Eigen::MatrixXd GenerateData(const unsigned int numberOfSamplesPerGroup, const unsigned int dimensionality);
 
-bool Test1DEvaluation();
+bool Test2DEvaluation();
 
-bool Test1D_EM();
+bool Test2D_EM();
 
 int main(int, char*[])
 {
-  bool passEval = Test1DEvaluation();
+  bool passEval = Test2DEvaluation();
   std::cout << "passEval? " << passEval << std::endl;
 
-  bool passEM = Test1D_EM();
+  bool passEM = Test2D_EM();
   std::cout << "passEM? " << passEM << std::endl;
 
   return EXIT_SUCCESS;
 }
 
-bool Test1DEvaluation()
+bool Test2DEvaluation()
 {
-  GaussianModel p(1);
-  Eigen::VectorXd mean = Eigen::VectorXd::Zero(1);
-  p.SetMean(mean);
-  Eigen::VectorXd variance = Eigen::MatrixXd::Identity(1,1);
-  p.SetVariance(variance);
-  Eigen::VectorXd v(1);
-  v(0) = .3;
-  double eval = p.Evaluate(v);
-  //std::cout << "1D: " << eval << std::endl;
-  double epsilon = 1e-6;
+  unsigned int dimensionality = 2;
+  GaussianModel p(dimensionality);
 
-  if(fabs(eval -  0.381388) > epsilon)
+  Eigen::VectorXd mean(dimensionality);
+  mean(0) = 0;
+  mean(1) = 5;
+  p.SetMean(mean);
+
+  Eigen::MatrixXd variance = Eigen::MatrixXd::Identity(dimensionality, dimensionality);
+  variance(0,0) = 2.0;
+
+  p.SetVariance(variance);
+
+  Eigen::VectorXd x(dimensionality);
+  x(0) = 0.1;
+  x(1) = 5.1;
+
+  double eval = p.Evaluate(x);
+  std::cout << "2D eval: " << eval << std::endl;
+
+  double test = 0.111699;
+
+  double epsilon = 1e-5;
+  if(fabs(eval - test) > epsilon)
   {
       return false;
   }
@@ -43,9 +54,9 @@ bool Test1DEvaluation()
   return true;
 }
 
-bool Test1D_EM()
+bool Test2D_EM()
 {
-  int dimensionality = 1;
+  int dimensionality = 2;
 
   // Generate some data
   Eigen::MatrixXd data = GenerateData(40, dimensionality);
@@ -60,10 +71,12 @@ bool Test1D_EM()
   }
 
   ExpectationMaximization expectationMaximization;
+
   expectationMaximization.SetData(data);
   expectationMaximization.SetRandom(false);
   expectationMaximization.SetModels(models);
   expectationMaximization.SetMaxIterations(3);
+  expectationMaximization.SetInitializationTechniqueToKMeans();
   expectationMaximization.Compute();
 
   // This is where we got the test output
@@ -73,27 +86,40 @@ bool Test1D_EM()
     expectationMaximization.GetModel(i)->Print();
   }
 
-  std::vector<double> testMeans;
-  testMeans.push_back(4.90469);
-  testMeans.push_back(0.00576815);
+  Eigen::VectorXd mean0(2);
+  mean0 << 0.0631675, -0.147669;
 
-  std::vector<double> testVariances;
-  testVariances.push_back(0.830928);
-  testVariances.push_back(0.862264);
+  Eigen::VectorXd mean1(2);
+  mean1 << 10.23, 10.069;
+
+  Eigen::MatrixXd var0(2,2);
+  var0 << 0.818243, -0.027182,
+          -0.027182,  0.836947;
+
+  Eigen::MatrixXd var1(2,2);
+  var1 << 2.49997, 0.10499,
+          0.10499, 1.85563;
 
   double epsilon = 1e-4;
 
-  for(unsigned int i = 0; i < expectationMaximization.GetNumberOfModels(); ++i)
+  // Check means
+  if((expectationMaximization.GetModel(0)->GetMean() - mean0).norm() > epsilon)
   {
-    if(fabs(testMeans[i] - expectationMaximization.GetModel(i)->GetMean()(0)) > epsilon)
-    {
-        return false;
-    }
+      return false;
+  }
+  if((expectationMaximization.GetModel(1)->GetMean() - mean1).norm() > epsilon)
+  {
+      return false;
+  }
 
-    if(fabs(testVariances[i] - expectationMaximization.GetModel(i)->GetVariance()(0,0)) > epsilon)
-    {
-        return false;
-    }
+  // Check variances
+  if((expectationMaximization.GetModel(0)->GetVariance() - var0).norm() > epsilon)
+  {
+      return false;
+  }
+  if((expectationMaximization.GetModel(1)->GetVariance() - var1).norm() > epsilon)
+  {
+      return false;
   }
 
   return true;
@@ -104,23 +130,25 @@ Eigen::MatrixXd GenerateData(const unsigned int numberOfSamplesPerGroup, const u
 {
   std::default_random_engine generator(0); // Seed with 0, so results are repeatable
 
-  // Mean 0, Standard deviation 1
+  // Mean 0, Standard deviation 1 for both dimensions
   Eigen::MatrixXd data1(dimensionality, numberOfSamplesPerGroup);
   std::normal_distribution<double> normalDistribution1(0,sqrt(1));
   for(unsigned int i = 0; i < numberOfSamplesPerGroup; i++)
   {
     Eigen::VectorXd v(dimensionality);
     v(0) = normalDistribution1(generator);
+    v(1) = normalDistribution1(generator);
     data1.col(i) = v;
   }
 
-  // Mean 5, Standard deviation 1
+  // Mean 10, Standard deviation 2 for both dimensions
   Eigen::MatrixXd data2(dimensionality, numberOfSamplesPerGroup);
-  std::normal_distribution<double> normalDistribution2(5,sqrt(1));
+  std::normal_distribution<double> normalDistribution2(10,sqrt(2));
   for(unsigned int i = 0; i < numberOfSamplesPerGroup; i++)
   {
-    Eigen::VectorXd v = Eigen::VectorXd::Random(dimensionality);
+    Eigen::VectorXd v(dimensionality);
     v(0) = normalDistribution2(generator);
+    v(1) = normalDistribution2(generator);
     data2.col(i) = v;
   }
 

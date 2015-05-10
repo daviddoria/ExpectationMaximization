@@ -15,13 +15,17 @@ public:
 
   unsigned int GetNumberOfModels() const {return this->Models.size();}
 
-  void SetData(Eigen::MatrixXd data){this->Data = data;}
-  void SetModels(std::vector<Model*> models) {this->Models = models;}
-  void AddModel(Model* model) {this->Models.push_back(model);}
+  void SetData(const Eigen::MatrixXd& data){this->Data = data;}
+
+  void SetModels(const std::vector<Model*> models) {this->Models = models;}
+
+  void AddModel(Model* const model) {this->Models.push_back(model);}
+
   unsigned int NumberOfDataPoints() const {return this->Data.cols();}
 
   std::vector<Model*> GetModels() const {return this->Models;}
-  Model* GetModel(int i) const {return this->Models[i];}
+
+  Model* GetModel(const unsigned int i) const {return this->Models[i];}
 
   void SetInitializationTechniqueToRandom(){this->InitializationTechnique = RANDOM;}
   void SetInitializationTechniqueToKMeans(){this->InitializationTechnique = KMEANS;}
@@ -30,7 +34,10 @@ public:
 
   void Compute();
 
+  /** Set a stopping criteria that determines how much the models have changed iteration to iteration. */
   void SetMinChange(const float minChange);
+
+  /** Set a stopping criteria that tracks the number of iterations that have been run. */
   void SetMaxIterations(const unsigned int maxIterations);
 
   /**
@@ -38,6 +45,7 @@ public:
    */
   void SetRandom(const bool r);
 
+  /** Get a seed for a random number generator based on the Random flag. */
   long int GetSeed() const;
 
 protected:
@@ -55,7 +63,7 @@ protected:
   
   enum InitializationEnum {RANDOM, KMEANS};
   
-  int InitializationTechnique;
+  int InitializationTechnique = RANDOM;
 
   bool Random = true;
 };
