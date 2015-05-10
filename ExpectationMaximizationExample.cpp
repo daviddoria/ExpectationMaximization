@@ -1,5 +1,5 @@
 #include "ExpectationMaximization.h"
-#include "Gaussian1D.h"
+#include "GaussianModel.h"
 
 #include <iostream>
 #include <random>
@@ -18,22 +18,9 @@ int main(int, char*[])
     // Initialize the model
     std::vector<Model*> models(3);
 
-    bool random = true;
-
-    std::default_random_engine generator(GetSeed(random));
-
-    std::uniform_real_distribution<double> meanDistribution(-5.0,5.0);
-    std::uniform_real_distribution<double> varianceDistribution(0,3.0);
-
     for(unsigned int i = 0; i < models.size(); i++)
     {
-      Model* model = new Gaussian1D;
-      model->SetDimensionality(dimensionality);
-
-      dynamic_cast<Gaussian1D*>(model)->SetMean(meanDistribution(generator));
-
-      dynamic_cast<Gaussian1D*>(model)->SetVariance(varianceDistribution(generator));
-      model->SetMixingCoefficient(1./models.size());
+      Model* model = new GaussianModel(dimensionality);
       models[i] = model;
     }
 

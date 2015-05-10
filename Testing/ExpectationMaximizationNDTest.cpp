@@ -1,5 +1,5 @@
 #include "ExpectationMaximization.h"
-#include "GaussianND.h"
+#include "GaussianModel.h"
 
 #include <iostream>
 #include <random>
@@ -56,20 +56,21 @@ Eigen::MatrixXd GenerateData(const unsigned int numberOfSamplesPerGroup, const u
 
 void TestNDEvaluation()
 {
-  GaussianND p;
-  p.SetDimensionality(1);
+  GaussianModel p(2);
 
-  Eigen::VectorXd mean(1);
+  Eigen::VectorXd mean(2);
   mean(0) = 0;
+  mean(1) = 5;
   p.SetMean(mean);
 
-  Eigen::MatrixXd variance(1,1);
+  Eigen::MatrixXd variance = Eigen::MatrixXd::Identity(2,2);
   variance(0,0) = 2.0;
 
   p.SetVariance(variance);
 
-  Eigen::VectorXd x(1);
+  Eigen::VectorXd x(2);
   x(0) = 0.3;
+  x(0) = 0.4;
   std::cout << "ND: " << p.Evaluate(x) << std::endl;
 }
 
@@ -85,16 +86,9 @@ void TestND()
 
   for(unsigned int i = 0; i < models.size(); i++)
   {
-    Model* model = new GaussianND;
-    model->SetDimensionality(dimensionality);
-    model->Init();
+    Model* model = new GaussianModel(dimensionality);
     models[i] = model;
   }
-
-  // Display initial model
-  //std::cout << "Randomly initialized model:" << std::endl;
-  //OutputModelInfo(models);
-  //PlotModels2D(models, data);
 
   ExpectationMaximization expectationMaximization;
 

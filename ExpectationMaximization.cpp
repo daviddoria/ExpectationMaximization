@@ -5,6 +5,7 @@
 
 // Custom
 #include "ExpectationMaximization.h"
+#include "GaussianModel.h"
 
 // Submodules
 #include "KMeansClustering/KMeansClustering.h"
@@ -44,7 +45,7 @@ void ExpectationMaximization::Compute()
   std::vector<Model*> lastModels(this->Models.size());
   for(unsigned int i = 0; i < this->Models.size(); i++)
   {
-    Model* model = new Gaussian1D; // This can be any derived type, we just need access to the member data
+    Model* model = new GaussianModel(1); // This can be any derived type, we just need access to the member data
     lastModels[i] = model;
   }
 
@@ -177,7 +178,6 @@ void ExpectationMaximization::RandomlyInitializeModels()
 
 void ExpectationMaximization::KMeansInitializeModels()
 {
-
   // Initialize with KMeans
   KMeansClustering kmeans;
   kmeans.SetK(this->GetNumberOfModels());
@@ -221,24 +221,24 @@ bool IsNaN(const double a)
   return false;
 }
 
-double ExpectationMaximization::WeightedEvaluate(const Eigen::VectorXd x) const
+double ExpectationMaximization::WeightedEvaluate(const Eigen::VectorXd& x) const
 {
   double sum = 0;
   for(unsigned int i = 0; i < this->Models.size(); i++)
-    {
+  {
     sum += this->Models[i]->WeightedEvaluate(x);
-    }
+  }
   return sum;
 }
 
 void ExpectationMaximization::SetMinChange(const float minChange)
 {
-    this->MinChange = minChange;
+  this->MinChange = minChange;
 }
 
 void ExpectationMaximization::SetMaxIterations(const unsigned int maxIterations)
 {
-    this->MaxIterations = maxIterations;
+  this->MaxIterations = maxIterations;
 }
 
 void ExpectationMaximization::SetRandom(const bool r)

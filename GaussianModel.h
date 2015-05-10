@@ -1,5 +1,5 @@
-#ifndef GAUSSIANND_H
-#define GAUSSIANND_H
+#ifndef GAUSSIANMODEL_H
+#define GAUSSIANMODEL_H
 
 /*
 http://www.cs.mcgill.ca/~cs644/Godfried/2005/Fall/boutin/gaussian.html
@@ -14,12 +14,14 @@ SIGMA = (1/N) sum_{n=1}^N (x_n - u)(x_n - u)^T
 
 #include "Model.h"
 
-class GaussianND : public Model
+class GaussianModel : public Model
 {
   public:
-    virtual double Evaluate(const Eigen::VectorXd x) const;
+    GaussianModel(const unsigned int dimensionality);
 
-    virtual double WeightedEvaluate(const Eigen::VectorXd x) const;
+    virtual double Evaluate(const Eigen::VectorXd& x) const;
+
+    virtual double WeightedEvaluate(const Eigen::VectorXd& x) const;
 
     void Print() const;
 };

@@ -1,7 +1,7 @@
 #ifndef __ExpectationMaximization_h
 #define __ExpectationMaximization_h
 
-#include "Gaussian1D.h"
+#include "Model.h"
 
 #include <Eigen/StdVector> // Required (http://eigen.tuxfamily.org/dox-devel/TopicStlContainers.html)
 
@@ -26,7 +26,7 @@ public:
   void SetInitializationTechniqueToRandom(){this->InitializationTechnique = RANDOM;}
   void SetInitializationTechniqueToKMeans(){this->InitializationTechnique = KMEANS;}
   
-  double WeightedEvaluate(const Eigen::VectorXd x) const;
+  double WeightedEvaluate(const Eigen::VectorXd& x) const;
 
   void Compute();
 

@@ -9,9 +9,7 @@
 class Model
 {
   public:
-    
-    void Init();
-    
+
     void SetDiagonalCovariance(const Eigen::VectorXd& diagonal);
     
     void SetDimensionality(const unsigned int dim);
@@ -26,9 +24,9 @@ class Model
     double GetMixingCoefficient() const;
     void SetMixingCoefficient(const double m);
 
-    virtual double Evaluate(const Eigen::VectorXd x) const = 0;
+    virtual double Evaluate(const Eigen::VectorXd& x) const = 0;
 
-    virtual double WeightedEvaluate(const Eigen::VectorXd x) const = 0;
+    virtual double WeightedEvaluate(const Eigen::VectorXd& x) const = 0;
 
     virtual void Print() const = 0;
     

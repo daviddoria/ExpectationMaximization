@@ -1,5 +1,5 @@
 #include "ExpectationMaximization.h"
-#include "GaussianND.h"
+#include "GaussianModel.h"
 
 #include <iostream>
 #include <random>
@@ -57,11 +57,14 @@ Eigen::MatrixXd GenerateData(const unsigned int numberOfSamplesPerGroup, const u
 
 void Test1DEvaluation()
 {
-  Gaussian1D p;
-  p.SetDimensionality(1);
-  p.SetMean(0);
-  p.SetVariance(2);
-  std::cout << "1D: " << p.Evaluate(.3) << std::endl;
+  GaussianModel p(1);
+  Eigen::VectorXd mean = Eigen::VectorXd::Zero(1);
+  p.SetMean(mean);
+  Eigen::VectorXd variance = Eigen::MatrixXd::Identity(1,1);
+  p.SetVariance(variance);
+  Eigen::VectorXd v(1);
+  v(0) = .3;
+  std::cout << "1D: " << p.Evaluate(v) << std::endl;
 }
 
 void Test1D()
@@ -74,27 +77,11 @@ void Test1D()
   // Initialize the model
   std::vector<Model*> models(3);
 
-  std::default_random_engine generator;
-  std::uniform_real_distribution<double> meanDistribution(-5.0,5.0);
-  std::uniform_real_distribution<double> varianceDistribution(0,3.0);
-
   for(unsigned int i = 0; i < models.size(); i++)
   {
-    Model* model = new Gaussian1D;
-    model->SetDimensionality(dimensionality);
-
-    dynamic_cast<Gaussian1D*>(model)->SetMean(meanDistribution(generator));
-
-    dynamic_cast<Gaussian1D*>(model)->SetVariance(varianceDistribution(generator));
-    model->SetMixingCoefficient(1./models.size());
+    Model* model = new GaussianModel(dimensionality);
     models[i] = model;
   }
-
-  // Display initial model
-  std::cout << "Randomly initialized model:" << std::endl;
-  //OutputModelInfo(models);
-  //double range[2] = {-15, 15};
-  //PlotModels1D(models, range);
 
   ExpectationMaximization expectationMaximization;
   expectationMaximization.SetData(data);
