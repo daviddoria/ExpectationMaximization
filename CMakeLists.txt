@@ -27,11 +27,11 @@ endif()
 
 add_subdirectory(KMeansClustering)
 
-add_library(libExpectationMaximization ExpectationMaximization.cpp Gaussian1D.cxx GaussianND.cxx Model.cxx)
+add_library(libExpectationMaximization ExpectationMaximization.cpp Gaussian1D.cpp GaussianND.cpp Model.cpp)
 TARGET_LINK_LIBRARIES(libExpectationMaximization
 KMeansClustering)
 
-ADD_EXECUTABLE(ExpectationMaximization Example.cxx)
-TARGET_LINK_LIBRARIES(ExpectationMaximization
+ADD_EXECUTABLE(ExpectationMaximizationExample ExpectationMaximizationExample.cpp)
+TARGET_LINK_LIBRARIES(ExpectationMaximizationExample
 libExpectationMaximization
 KMeansClustering)
