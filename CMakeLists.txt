@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 
 PROJECT(ExpectationMaximization)
+SET(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+add_subdirectory(CMakeHelpers)
 
 # C++11 support
 if(UNIX)
@@ -25,13 +28,16 @@ if(NOT EIGEN3_FOUND)
   include_directories(${EIGEN3_INCLUDE_DIR})
 endif()
 
-add_subdirectory(KMeansClustering)
+# Submodules
+UseSubmodule(KMeansClustering ExpectationMaximization)
 
 add_library(libExpectationMaximization ExpectationMaximization.cpp GaussianModel.cpp Model.cpp)
 TARGET_LINK_LIBRARIES(libExpectationMaximization KMeansClustering)
 
 ADD_EXECUTABLE(ExpectationMaximizationExample ExpectationMaximizationExample.cpp)
 TARGET_LINK_LIBRARIES(ExpectationMaximizationExample libExpectationMaximization KMeansClustering)
+
+CreateSubmodule(ExpectationMaximization)
 
 # Build the tests if requested.
 option(ExpectationMaximization_BuildTests "ExpectationMaximization_BuildTests" OFF)
