@@ -26,6 +26,17 @@ class GaussianModel : public Model
     virtual double WeightedEvaluate(const Eigen::VectorXd& x) const;
 
     void Print() const;
+
+    virtual GaussianModel* Clone()
+    {
+        GaussianModel* newObject = new GaussianModel(this->Dimensionality);
+
+        newObject->SetMean(this->Mean);
+        newObject->SetVariance(this->Variance);
+        newObject->SetMixingCoefficient(this->MixingCoefficient);
+
+        return newObject;
+    }
 };
 
 #endif

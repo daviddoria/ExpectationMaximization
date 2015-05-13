@@ -24,18 +24,22 @@ int main(int, char*[])
       models[i] = model;
     }
 
+    MixtureModel mixtureModel;
+    mixtureModel.SetModels(models);
+
     ExpectationMaximization expectationMaximization;
     expectationMaximization.SetData(data);
-    expectationMaximization.SetModels(models);
+    expectationMaximization.SetMixtureModel(mixtureModel);
     expectationMaximization.SetMinChange(1e-5);
     expectationMaximization.SetMaxIterations(100);
 
     expectationMaximization.Compute();
 
     std::cout << "Final models:" << std::endl;
-    for(unsigned int i = 0; i < expectationMaximization.GetNumberOfModels(); ++i)
+    MixtureModel finalModel = expectationMaximization.GetMixtureModel();
+    for(unsigned int i = 0; i < finalModel.GetNumberOfModels(); ++i)
     {
-      expectationMaximization.GetModel(i)->Print();
+      finalModel.GetModel(i)->Print();
     }
 
   return EXIT_SUCCESS;

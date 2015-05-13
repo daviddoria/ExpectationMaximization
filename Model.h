@@ -33,7 +33,9 @@ class Model
 
     /** Display properties of the model. */
     virtual void Print() const = 0;
-    
+
+    virtual Model* Clone() = 0;
+
   protected:
 
     Eigen::VectorXd Mean;

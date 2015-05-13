@@ -25,7 +25,7 @@ ExpectationMaximization::ExpectationMaximization()
 void ExpectationMaximization::Compute()
 {
   std::cout << "ExpectationMaximization::Compute" << std::endl;
-  this->Responsibilities.resize(this->Data.size(),this->GetNumberOfModels());
+  this->Responsibilities.resize(this->Data.size(),this->Model.GetNumberOfModels());
 
   if(this->InitializationTechnique == RANDOM)
   {
@@ -39,91 +39,73 @@ void ExpectationMaximization::Compute()
   bool done = false;
   int iter = 0;
 
-  // We need to actually copy the data
-  std::vector<Model*> lastModels(this->Models.size());
-  for(unsigned int i = 0; i < this->Models.size(); i++)
-  {
-    Model* model = new GaussianModel(1); // This can be any derived type, we just need access to the member data
-    lastModels[i] = model;
-  }
+  // An object used to save the old model
+  MixtureModel previousModel;
 
   do
     {
     std::cout << "EM iteration " << iter << "..." << std::endl;
     // Save a snapshot of the current models
-    for(unsigned int i = 0; i < this->Models.size(); i++)
-    {
-      lastModels[i]->SetVariance(this->Models[i]->GetVariance());
-      lastModels[i]->SetMean(this->Models[i]->GetMean());
-    }
+    previousModel.CopyFrom(this->Model);
 
     // E step - evaluate responsibilities
-    for(unsigned int point = 0; point < this->NumberOfDataPoints(); point++)
+    for(unsigned int pointId = 0; pointId < this->NumberOfDataPoints(); pointId++)
     {
-      double normalization = 0.0;
-      for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
-      {
-        double val = this->Models[model]->WeightedEvaluate(this->Data.col(point));
-        if(IsNaN(val))
-        {
-          std::cout << "val of " << this->Data.col(point) << " is nan for model " << model << "!" << std::endl;
-          exit(-1);
-        }
-        normalization += val;
-      }
+      double normalization = this->Model.WeightedEvaluate(this->Data.col(pointId));
+
       //std::cout << "normalization: " << normalization << std::endl;
-      for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
+      for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
       {
-        double resp = this->Models[model]->WeightedEvaluate(this->Data.col(point));
-        this->Responsibilities(point, model) = resp / normalization;
+        double resp = this->Model.GetModel(modelId)->WeightedEvaluate(this->Data.col(pointId));
+        this->Responsibilities(pointId, modelId) = resp / normalization;
       }
     }
 
     // M step - estimate parameters based on the new responsibilities
-    for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
+    for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
     {
       double sumResponsibilities = 0;
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
       {
-        sumResponsibilities += this->Responsibilities(i, model);
+        sumResponsibilities += this->Responsibilities(i, modelId);
       }
       //std::cout << "sumResponsibilities : " << sumResponsibilities << std::endl;;
 
-      Eigen::VectorXd newMean = Eigen::VectorXd::Zero(this->Models[0]->GetDimensionality());
+      Eigen::VectorXd newMean = Eigen::VectorXd::Zero(this->Model.GetDimensionality());
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
       {
-        newMean += this->Responsibilities(i, model) * this->Data.col(i);
+        newMean += this->Responsibilities(i, modelId) * this->Data.col(i);
       }
       newMean /= sumResponsibilities;
-      this->Models[model]->SetMean(newMean);
+      this->Model.GetModel(modelId)->SetMean(newMean);
 
-      Eigen::MatrixXd newVariance(this->Models[0]->GetDimensionality(), this->Models[0]->GetDimensionality());
-      newVariance.setZero(this->Models[0]->GetDimensionality(), this->Models[0]->GetDimensionality());
+      Eigen::MatrixXd newVariance(this->Model.GetDimensionality(), this->Model.GetDimensionality());
+      newVariance.setZero(this->Model.GetDimensionality(), this->Model.GetDimensionality());
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
       {
         //SIGMA = (1/N) sum_{n=1}^N (x_n - u)(x_n - u)^T
-        newVariance += this->Responsibilities(i,model) * (this->Data.col(i) - newMean) * (this->Data.col(i) - newMean).transpose();
+        newVariance += this->Responsibilities(i,modelId) * (this->Data.col(i) - newMean) * (this->Data.col(i) - newMean).transpose();
       }
       newVariance /= sumResponsibilities;
-      this->Models[model]->SetVariance(newVariance);
+      this->Model.GetModel(modelId)->SetVariance(newVariance);
     } // end M step loop
 
     // Update mixing coefficients
-    for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
+    for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
     {
       double sumResponsibilities = 0;
       for(unsigned int i = 0; i < this->NumberOfDataPoints(); i++)
       {
-        sumResponsibilities += this->Responsibilities(i, model);
+        sumResponsibilities += this->Responsibilities(i, modelId);
       }
-      this->Models[model]->SetMixingCoefficient(sumResponsibilities/static_cast<double>(this->NumberOfDataPoints()));
+      this->Model.GetModel(modelId)->SetMixingCoefficient(sumResponsibilities/static_cast<double>(this->NumberOfDataPoints()));
     }
 
     // Check if we have converged
     done = true; // assume we have converged until we see otherwise
-    for(unsigned int model = 0; model < this->GetNumberOfModels(); model++)
+    for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
     {
-      double meanDiff = (this->Models[model]->GetMean() - lastModels[model]->GetMean()).norm();
+      double meanDiff = (this->Model.GetModel(modelId)->GetMean() - previousModel.GetModel(modelId)->GetMean()).norm();
 
       // If any of the models have not converged, we need to continue
       if((meanDiff > this->MinChange))
@@ -140,11 +122,11 @@ void ExpectationMaximization::Compute()
 
 void ExpectationMaximization::RandomlyInitializeModels()
 {
-  unsigned int dim = this->Models[0]->GetDimensionality();
+  unsigned int dim = this->Model.GetDimensionality();
 
   std::default_random_engine generator;
 
-  for(unsigned int model = 0; model < this->Models.size(); model++)
+  for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
   {
     // Mean
     Eigen::VectorXd mean(dim);
@@ -153,7 +135,7 @@ void ExpectationMaximization::RandomlyInitializeModels()
     {
       mean(d) = meanDistribution(generator);
     }
-    this->Models[model]->SetMean(mean);
+    this->Model.GetModel(modelId)->SetMean(mean);
 
     // Variance
     Eigen::VectorXd variance(dim);
@@ -167,10 +149,10 @@ void ExpectationMaximization::RandomlyInitializeModels()
     Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dim, dim);
     covariance.diagonal() = variance;
 
-    this->Models[model]->SetVariance(covariance);
+    this->Model.GetModel(modelId)->SetVariance(covariance);
 
     // Mixing coefficient
-    this->Models[model]->SetMixingCoefficient(1./this->GetNumberOfModels());
+    this->Model.GetModel(modelId)->SetMixingCoefficient(1./this->Model.GetNumberOfModels());
   }
 }
 
@@ -178,18 +160,18 @@ void ExpectationMaximization::KMeansInitializeModels()
 {
   // Initialize with KMeans
   KMeansClustering kmeans;
-  kmeans.SetK(this->GetNumberOfModels());
+  kmeans.SetK(this->Model.GetNumberOfModels());
   kmeans.SetPoints(this->Data);
   kmeans.Cluster();
 
   Eigen::MatrixXd clusterCenters = kmeans.GetClusterCenters();
 
-  unsigned int dim = this->Models[0]->GetDimensionality();
+  unsigned int dim = this->Model.GetDimensionality();
 
-  for(unsigned int modelId = 0; modelId < this->Models.size(); modelId++)
+  for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
   {
     // Set initial EM means from KMeans cluster centers
-    this->Models[modelId]->SetMean(clusterCenters.col(modelId));
+    this->Model.GetModel(modelId)->SetMean(clusterCenters.col(modelId));
 
     // Set initial EM variances from KMeans cluster bounds
     // See 'Partial Reductions': http://eigen.tuxfamily.org/dox/group__TutorialReductionsVisitorsBroadcasting.html
@@ -206,10 +188,10 @@ void ExpectationMaximization::KMeansInitializeModels()
     Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dim, dim);
     covariance.diagonal() = center;
 
-    this->Models[modelId]->SetVariance(covariance);
+    this->Model.GetModel(modelId)->SetVariance(covariance);
 
     // The ratio of points in the cluster to total points
-    this->Models[modelId]->SetMixingCoefficient(static_cast<float>(kmeans.GetIndicesWithLabel(modelId).size())/static_cast<float>(this->Data.cols()));
+    this->Model.GetModel(modelId)->SetMixingCoefficient(static_cast<float>(kmeans.GetIndicesWithLabel(modelId).size())/static_cast<float>(this->Data.cols()));
   }
 }
 
@@ -220,16 +202,6 @@ bool IsNaN(const double a)
     return true;
   }
   return false;
-}
-
-double ExpectationMaximization::WeightedEvaluate(const Eigen::VectorXd& x) const
-{
-  double sum = 0;
-  for(unsigned int i = 0; i < this->Models.size(); i++)
-  {
-    sum += this->Models[i]->WeightedEvaluate(x);
-  }
-  return sum;
 }
 
 void ExpectationMaximization::SetMinChange(const float minChange)

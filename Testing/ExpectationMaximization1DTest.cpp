@@ -59,18 +59,23 @@ bool Test1D_EM()
     models[i] = model;
   }
 
+  MixtureModel mixtureModel;
+  mixtureModel.SetModels(models);
+
   ExpectationMaximization expectationMaximization;
   expectationMaximization.SetData(data);
   expectationMaximization.SetRandom(false);
-  expectationMaximization.SetModels(models);
+  expectationMaximization.SetMixtureModel(mixtureModel);
   expectationMaximization.SetMaxIterations(3);
   expectationMaximization.Compute();
 
   // This is where we got the test output
-  for(unsigned int i = 0; i < expectationMaximization.GetNumberOfModels(); ++i)
+  MixtureModel finalModel = expectationMaximization.GetMixtureModel();
+
+  for(unsigned int i = 0; i < finalModel.GetNumberOfModels(); ++i)
   {
     std::cout << "Model " << i << ":" << std::endl;
-    expectationMaximization.GetModel(i)->Print();
+    finalModel.GetModel(i)->Print();
   }
 
   std::vector<double> testMeans;
@@ -83,14 +88,14 @@ bool Test1D_EM()
 
   double epsilon = 1e-4;
 
-  for(unsigned int i = 0; i < expectationMaximization.GetNumberOfModels(); ++i)
+  for(unsigned int i = 0; i < finalModel.GetNumberOfModels(); ++i)
   {
-    if(fabs(testMeans[i] - expectationMaximization.GetModel(i)->GetMean()(0)) > epsilon)
+    if(fabs(testMeans[i] - finalModel.GetModel(i)->GetMean()(0)) > epsilon)
     {
         return false;
     }
 
-    if(fabs(testVariances[i] - expectationMaximization.GetModel(i)->GetVariance()(0,0)) > epsilon)
+    if(fabs(testVariances[i] - finalModel.GetModel(i)->GetVariance()(0,0)) > epsilon)
     {
         return false;
     }

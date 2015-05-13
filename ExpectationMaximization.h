@@ -2,6 +2,7 @@
 #define __ExpectationMaximization_h
 
 #include "Model.h"
+#include "MixtureModel.h"
 
 #include <Eigen/StdVector> // Required (http://eigen.tuxfamily.org/dox-devel/TopicStlContainers.html)
 
@@ -13,24 +14,16 @@ public:
   /* Constructor. */
   ExpectationMaximization();
 
-  unsigned int GetNumberOfModels() const {return this->Models.size();}
-
   void SetData(const Eigen::MatrixXd& data){this->Data = data;}
 
-  void SetModels(const std::vector<Model*> models) {this->Models = models;}
-
-  void AddModel(Model* const model) {this->Models.push_back(model);}
+  void SetMixtureModel(const MixtureModel& mixtureModel) {this->Model = mixtureModel;}
 
   unsigned int NumberOfDataPoints() const {return this->Data.cols();}
 
-  std::vector<Model*> GetModels() const {return this->Models;}
-
-  Model* GetModel(const unsigned int i) const {return this->Models[i];}
+  MixtureModel GetMixtureModel() const {return this->Model;}
 
   void SetInitializationTechniqueToRandom(){this->InitializationTechnique = RANDOM;}
   void SetInitializationTechniqueToKMeans(){this->InitializationTechnique = KMEANS;}
-  
-  double WeightedEvaluate(const Eigen::VectorXd& x) const;
 
   void Compute();
 
@@ -53,7 +46,7 @@ protected:
   int MaxIterations;
   float MinChange;
 
-  std::vector<Model*> Models;
+  MixtureModel Model;
   Eigen::MatrixXd Data;
 
   Eigen::MatrixXd Responsibilities;

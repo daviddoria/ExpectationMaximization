@@ -39,6 +39,10 @@ TARGET_LINK_LIBRARIES(ExpectationMaximizationExample libExpectationMaximization 
 
 CreateSubmodule(ExpectationMaximization)
 
+# Make the h/hpp files appear in a QtCreator project
+add_custom_target(ExpectationMaximization SOURCES
+MixtureModel.h README.md)
+
 # Build the tests if requested.
 option(ExpectationMaximization_BuildTests "ExpectationMaximization_BuildTests" OFF)
 if(ExpectationMaximization_BuildTests)

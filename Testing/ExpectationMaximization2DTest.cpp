@@ -70,20 +70,23 @@ bool Test2D_EM()
     models[i] = model;
   }
 
-  ExpectationMaximization expectationMaximization;
+  MixtureModel mixtureModel;
+  mixtureModel.SetModels(models);
 
+  ExpectationMaximization expectationMaximization;
   expectationMaximization.SetData(data);
   expectationMaximization.SetRandom(false);
-  expectationMaximization.SetModels(models);
+  expectationMaximization.SetMixtureModel(mixtureModel);
   expectationMaximization.SetMaxIterations(3);
   expectationMaximization.SetInitializationTechniqueToKMeans();
   expectationMaximization.Compute();
 
   // This is where we got the test output
-  for(unsigned int i = 0; i < expectationMaximization.GetNumberOfModels(); ++i)
+  MixtureModel finalModel = expectationMaximization.GetMixtureModel();
+  for(unsigned int i = 0; i < finalModel.GetNumberOfModels(); ++i)
   {
     std::cout << "Model " << i << ":" << std::endl;
-    expectationMaximization.GetModel(i)->Print();
+    finalModel.GetModel(i)->Print();
   }
 
   Eigen::VectorXd mean0(2);
@@ -103,21 +106,21 @@ bool Test2D_EM()
   double epsilon = 1e-4;
 
   // Check means
-  if((expectationMaximization.GetModel(0)->GetMean() - mean0).norm() > epsilon)
+  if((finalModel.GetModel(0)->GetMean() - mean0).norm() > epsilon)
   {
       return false;
   }
-  if((expectationMaximization.GetModel(1)->GetMean() - mean1).norm() > epsilon)
+  if((finalModel.GetModel(1)->GetMean() - mean1).norm() > epsilon)
   {
       return false;
   }
 
   // Check variances
-  if((expectationMaximization.GetModel(0)->GetVariance() - var0).norm() > epsilon)
+  if((finalModel.GetModel(0)->GetVariance() - var0).norm() > epsilon)
   {
       return false;
   }
-  if((expectationMaximization.GetModel(1)->GetVariance() - var1).norm() > epsilon)
+  if((finalModel.GetModel(1)->GetVariance() - var1).norm() > epsilon)
   {
       return false;
   }
