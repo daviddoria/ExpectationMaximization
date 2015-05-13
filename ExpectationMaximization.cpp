@@ -1,3 +1,20 @@
+/*
+Copyright (C) 2015 David Doria, daviddoria@gmail.com
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 // STL
 #include <iostream>
 #include <random>
@@ -52,12 +69,16 @@ void ExpectationMaximization::Compute()
     for(unsigned int pointId = 0; pointId < this->NumberOfDataPoints(); pointId++)
     {
       double normalization = this->Model.WeightedEvaluate(this->Data.col(pointId));
+      if(normalization == 0)
+      {
+          normalization = 1;
+      }
 
       //std::cout << "normalization: " << normalization << std::endl;
       for(unsigned int modelId = 0; modelId < this->Model.GetNumberOfModels(); modelId++)
       {
-        double resp = this->Model.GetModel(modelId)->WeightedEvaluate(this->Data.col(pointId));
-        this->Responsibilities(pointId, modelId) = resp / normalization;
+        double responsibility = this->Model.GetModel(modelId)->WeightedEvaluate(this->Data.col(pointId));
+        this->Responsibilities(pointId, modelId) = responsibility / normalization;
       }
     }
 
