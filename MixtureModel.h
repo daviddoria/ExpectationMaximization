@@ -50,15 +50,7 @@ class MixtureModel
             mixtureSum += this->Models[i]->WeightedEvaluate(x);
         }
 
-        if(mixtureSum == 0)
-        {
-            std::cout << "mixtureSum = 0!" << std::endl;
-        }
-
-        if(Helpers::IsNaN(mixtureSum))
-        {
-            std::cout << "mixtureSum is NaN!" << std::endl;
-        }
+        assert(!Helpers::IsNaN(mixtureSum));
 
         return mixtureSum;
     }
